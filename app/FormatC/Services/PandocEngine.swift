@@ -73,6 +73,22 @@ struct PandocEngine {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: executablePath)
         p.arguments = args
+        // GUI-launched apps get a minimal PATH that omits everywhere TeX
+        // Live installs its binaries. Pandoc then can't find xelatex even
+        // when it's installed. Extend PATH so the common install
+        // locations (MacTeX/BasicTeX at /Library/TeX/texbin, Homebrew,
+        // custom TeX Live) are all searchable.
+        var env = ProcessInfo.processInfo.environment
+        let extraPaths = [
+            "/Library/TeX/texbin",
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+        ]
+        env["PATH"] = ([env["PATH"] ?? ""] + extraPaths)
+            .filter { !$0.isEmpty }
+            .joined(separator: ":")
+        p.environment = env
+
         let errPipe = Pipe()
         p.standardError = errPipe
         p.standardOutput = Pipe()
