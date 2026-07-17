@@ -23,6 +23,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.toolsai.formatc
+        ARCHS: "arm64 x86_64"
+        VALID_ARCHS: "arm64 x86_64"
         INFOPLIST_KEY_CFBundleDisplayName: FormatC
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_NSHumanReadableCopyright: "© ToolsAI"
@@ -32,3 +34,8 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: YES
         COMBINE_HIDPI_IMAGES: YES
+      configs:
+        Debug:
+          ONLY_ACTIVE_ARCH: YES
+        Release:
+          ONLY_ACTIVE_ARCH: NO

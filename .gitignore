@@ -7,6 +7,9 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 
+# release artifacts
+dist/
+
 # macOS
 .DS_Store
 **/.DS_Store
