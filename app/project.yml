@@ -26,6 +26,8 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: FormatC
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_NSHumanReadableCopyright: "© ToolsAI"
+        INFOPLIST_KEY_CFBundleIconName: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_ENTITLEMENTS: FormatC/FormatC.entitlements
         ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: YES
