@@ -5,7 +5,7 @@ A tiny macOS utility for document + image work. Drag files in, hit a button.
 - **Convert** between PDF, Markdown, HTML, DOCX, RTF, ODT, EPUB, TXT, LaTeX, PNG, JPEG, WebP, HEIC, TIFF, GIF, BMP.
 - **Merge** PDFs.
 - **Split** PDFs — one file per page, or extract a range.
-- **Edit PDF** — compress (re-render at chosen DPI + JPEG quality), number pages, crop margins.
+- **Edit PDF** — compress, number pages, crop margins, **sign** (draw once, place on any page), **add text** with an optional "cover the old text with a white box" mode.
 - **Remove background** from images with Apple's on-device subject-isolation model (macOS 14+).
 
 Native SwiftUI, no analytics, no accounts, no cloud round-trip. Everything runs locally.

@@ -4,13 +4,16 @@ import AppKit
 import PDFKit
 
 /// One tab that gathers the "modify a PDF in place" tools: Compress,
-/// Number, Crop. Sub-picker at the top switches between them; each shares
-/// the same drop zone on the left and result panel on the right.
+/// Number, Crop, Sign, and Add text. Sub-picker at the top switches
+/// between them; each shares the same drop zone on the left and result
+/// panel on the right.
 struct EditPDFView: View {
     enum Mode: String, CaseIterable, Identifiable {
         case compress = "Compress"
-        case number   = "Number pages"
-        case crop     = "Crop pages"
+        case number   = "Number"
+        case crop     = "Crop"
+        case sign     = "Sign"
+        case addText  = "Add text"
         var id: String { rawValue }
     }
 
@@ -36,6 +39,20 @@ struct EditPDFView: View {
     @State private var marginBottom: Double = 36
     @State private var marginLeft: Double = 36
 
+    // Sign
+    @State private var signPage: Int = 1
+    @State private var signAnchor: PDFAnchor = .bottomRight
+    @State private var signScale: Double = 0.25
+    @State private var hasSignature: Bool = SignatureStore.exists
+    @State private var showingSignatureCapture = false
+
+    // Add text
+    @State private var textPage: Int = 1
+    @State private var textContent: String = ""
+    @State private var textAnchor: PDFAnchor = .topCenter
+    @State private var textFontSize: Double = 14
+    @State private var textWhiteCover: Bool = false
+
     var body: some View {
         VStack(spacing: 0) {
             modePicker
@@ -51,6 +68,11 @@ struct EditPDFView: View {
                     .padding(Tokens.Space.lg)
             }
         }
+        .sheet(isPresented: $showingSignatureCapture) {
+            SignatureCaptureView(onSaved: {
+                hasSignature = true
+            })
+        }
     }
 
     private var modePicker: some View {
@@ -59,7 +81,7 @@ struct EditPDFView: View {
                 ForEach(Mode.allCases) { m in Text(m.rawValue).tag(m) }
             }
             .pickerStyle(.segmented)
-            .frame(width: 320)
+            .frame(width: 460)
             Spacer()
         }
         .padding(.horizontal, Tokens.Space.lg)
@@ -110,6 +132,8 @@ struct EditPDFView: View {
         case .compress: return "arrow.down.to.line.compact"
         case .number:   return "number.square"
         case .crop:     return "crop"
+        case .sign:     return "signature"
+        case .addText:  return "text.cursor"
         }
     }
 
@@ -119,6 +143,8 @@ struct EditPDFView: View {
         case .compress: compressControls
         case .number:   numberControls
         case .crop:     cropControls
+        case .sign:     signControls
+        case .addText:  addTextControls
         }
     }
 
@@ -185,6 +211,106 @@ struct EditPDFView: View {
         }
     }
 
+    private var signControls: some View {
+        VStack(alignment: .leading, spacing: Tokens.Space.sm) {
+            signaturePreview
+            HStack {
+                Text("Page").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Stepper("\(signPage)", value: $signPage, in: 1...max(1, pageCount)).labelsHidden()
+                Text("\(signPage) / \(pageCount)").font(Tokens.Font.mono).frame(width: 60)
+            }
+            HStack {
+                Text("Corner").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Spacer()
+                Picker("", selection: $signAnchor) {
+                    ForEach(PDFAnchor.allCases) { a in Text(a.displayName).tag(a) }
+                }
+                .labelsHidden().pickerStyle(.menu).frame(maxWidth: 150)
+            }
+            HStack {
+                Text("Size").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Slider(value: $signScale, in: 0.10...0.50, step: 0.05)
+                Text("\(Int(signScale * 100))%").font(Tokens.Font.mono).frame(width: 40)
+            }
+        }
+    }
+
+    private var signaturePreview: some View {
+        HStack(spacing: Tokens.Space.sm) {
+            if hasSignature, let img = SignatureStore.load() {
+                Image(nsImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 44)
+                    .padding(4)
+                    .background(Color.white)
+                    .cornerRadius(4)
+                    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Tokens.Color.border))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Signature saved")
+                        .font(Tokens.Font.caption)
+                        .foregroundStyle(Tokens.Color.text)
+                    Button("Redraw…") { showingSignatureCapture = true }
+                        .buttonStyle(.borderless)
+                        .font(Tokens.Font.caption)
+                        .foregroundStyle(Tokens.Color.accent)
+                }
+                Spacer()
+            } else {
+                Button {
+                    showingSignatureCapture = true
+                } label: {
+                    HStack {
+                        Image(systemName: "signature")
+                        Text("Draw your signature…")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Tokens.Space.sm)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+
+    private var addTextControls: some View {
+        VStack(alignment: .leading, spacing: Tokens.Space.sm) {
+            Text("Text")
+                .font(Tokens.Font.caption)
+                .foregroundStyle(Tokens.Color.textDim)
+            TextField("Text to add", text: $textContent, axis: .vertical)
+                .textFieldStyle(.roundedBorder)
+                .lineLimit(2...4)
+            HStack {
+                Text("Page").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Stepper("\(textPage)", value: $textPage, in: 1...max(1, pageCount)).labelsHidden()
+                Text("\(textPage) / \(pageCount)").font(Tokens.Font.mono).frame(width: 60)
+            }
+            HStack {
+                Text("Position").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Spacer()
+                Picker("", selection: $textAnchor) {
+                    ForEach(PDFAnchor.allCases) { a in Text(a.displayName).tag(a) }
+                }
+                .labelsHidden().pickerStyle(.menu).frame(maxWidth: 150)
+            }
+            HStack {
+                Text("Size").font(Tokens.Font.caption).foregroundStyle(Tokens.Color.textDim)
+                Slider(value: $textFontSize, in: 8...48, step: 1)
+                Text("\(Int(textFontSize))pt").font(Tokens.Font.mono).frame(width: 40)
+            }
+            Toggle(isOn: $textWhiteCover) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Cover underneath with a white box")
+                        .font(Tokens.Font.caption)
+                    Text("Use this to \"replace\" existing text — paints white, then overlays yours.")
+                        .font(Tokens.Font.caption)
+                        .foregroundStyle(Tokens.Color.textFaint)
+                }
+            }
+            .toggleStyle(.checkbox)
+        }
+    }
+
     private func marginField(_ label: String, value: Binding<Double>) -> some View {
         HStack {
             Text(label)
@@ -209,7 +335,7 @@ struct EditPDFView: View {
             .padding(.vertical, Tokens.Space.md)
         }
         .buttonStyle(.borderedProminent)
-        .disabled(pdf == nil || isRunning)
+        .disabled(!canRun)
     }
 
     private var runLabel: String {
@@ -218,6 +344,17 @@ struct EditPDFView: View {
         case .compress: return "Compress"
         case .number:   return "Number pages"
         case .crop:     return "Crop pages"
+        case .sign:     return "Sign PDF"
+        case .addText:  return "Add text"
+        }
+    }
+
+    private var canRun: Bool {
+        guard pdf != nil, !isRunning else { return false }
+        switch mode {
+        case .sign:    return hasSignature
+        case .addText: return !textContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        default:       return true
         }
     }
 
@@ -283,6 +420,10 @@ struct EditPDFView: View {
         }
         pdf = url
         pageCount = doc.pageCount
+        // Default signatures to the last page (typical) and added text to
+        // the first page. User can override.
+        signPage = doc.pageCount
+        textPage = 1
         lastResult = nil
         lastResultDetail = nil
         errorMessage = nil
@@ -305,6 +446,15 @@ struct EditPDFView: View {
         let bottom = CGFloat(marginBottom)
         let left = CGFloat(marginLeft)
         let srcURL = pdf
+        let sigPage = self.signPage
+        let sigAnchorLocal = self.signAnchor
+        let sigScaleLocal = CGFloat(self.signScale)
+        let sigURL = SignatureStore.storageURL
+        let txtPage = self.textPage
+        let txtContent = self.textContent
+        let txtAnchorLocal = self.textAnchor
+        let txtFontSize = CGFloat(self.textFontSize)
+        let txtCover = self.textWhiteCover
         isRunning = true
 
         Task.detached(priority: .userInitiated) {
@@ -328,6 +478,21 @@ struct EditPDFView: View {
                         top: top, right: right, bottom: bottom, left: left
                     )
                     detail = nil
+                case .sign:
+                    try PDFOverlay.addSignature(
+                        to: srcURL, output: out,
+                        page: sigPage, signature: sigURL,
+                        anchor: sigAnchorLocal, scale: sigScaleLocal
+                    )
+                    detail = nil
+                case .addText:
+                    try PDFOverlay.addText(
+                        to: srcURL, output: out,
+                        page: txtPage, text: txtContent,
+                        anchor: txtAnchorLocal, fontSize: txtFontSize,
+                        whiteCover: txtCover
+                    )
+                    detail = nil
                 }
                 let finalDetail = detail
                 await MainActor.run {
@@ -349,6 +514,8 @@ struct EditPDFView: View {
         case .compress: return "compressed"
         case .number:   return "numbered"
         case .crop:     return "cropped"
+        case .sign:     return "signed"
+        case .addText:  return "edited"
         }
     }
 
