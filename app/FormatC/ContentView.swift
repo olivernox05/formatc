@@ -28,14 +28,13 @@ struct ContentView: View {
         .background(Tokens.Color.bg)
     }
 
+    // The title bar shows "FormatC" as the window title (standard macOS
+    // convention), so this header is just the main navigation picker —
+    // no need for a duplicate app-name label. Centered so the six-tab
+    // picker sits below whatever fills the traffic-light corner.
     private var header: some View {
-        HStack(spacing: Tokens.Space.md) {
-            Text("FormatC")
-                .font(Tokens.Font.display)
-                .foregroundStyle(Tokens.Color.text)
-
+        HStack {
             Spacer()
-
             Picker("", selection: $tab) {
                 Text("Convert").tag(Tab.convert)
                 Text("Merge").tag(Tab.merge)
@@ -46,9 +45,10 @@ struct ContentView: View {
             }
             .pickerStyle(.segmented)
             .frame(width: 560)
+            Spacer()
         }
         .padding(.horizontal, Tokens.Space.lg)
-        .padding(.vertical, Tokens.Space.md)
+        .padding(.vertical, Tokens.Space.sm)
     }
 
     private var statusBar: some View {
