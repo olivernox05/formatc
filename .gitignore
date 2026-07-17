@@ -1,0 +1,17 @@
+# Xcode
+app/FormatC.xcodeproj/
+app/FormatC.xcworkspace/
+app/*.xcodeproj/xcuserdata/
+app/build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python (for pdf2md.py while iterating)
+__pycache__/
+*.pyc
+.venv/
