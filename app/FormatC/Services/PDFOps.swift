@@ -39,6 +39,29 @@ enum PDFOps {
         }
     }
 
+    /// Extract a contiguous page range as a new PDF. `pages` is 1-indexed
+    /// and clamped to the doc's actual page count.
+    static func extractRange(_ input: URL, pages: ClosedRange<Int>, into output: URL) throws -> URL {
+        guard let doc = PDFDocument(url: input) else {
+            throw PDFOpsError.cannotOpen(input)
+        }
+        let clamped = max(1, pages.lowerBound)...min(doc.pageCount, pages.upperBound)
+        let single = PDFDocument()
+        var idx = 0
+        for i in clamped {
+            guard let page = doc.page(at: i - 1) else { continue }
+            single.insert(page, at: idx)
+            idx += 1
+        }
+        guard single.pageCount > 0 else { throw PDFOpsError.noPages }
+        try FileManager.default.createDirectory(
+            at: output.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        guard single.write(to: output) else { throw PDFOpsError.cannotWrite(output) }
+        return output
+    }
+
     /// Emit one PDF per page, named `<stem>_p<N>.pdf` in `directory`.
     static func split(_ input: URL, into directory: URL) throws -> [URL] {
         guard let doc = PDFDocument(url: input) else {

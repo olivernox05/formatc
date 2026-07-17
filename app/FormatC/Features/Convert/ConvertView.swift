@@ -62,7 +62,10 @@ struct ConvertView: View {
     }
 
     private var dropZone: some View {
-        DropZone(kinds: [.pdf, .png, .jpeg, .html, .plainText, UTType(filenameExtension: "md") ?? .plainText, UTType(filenameExtension: "docx") ?? .data]) { urls in
+        // Every UTType the app knows how to source. Kept in one place so
+        // the enum drives what the UI actually accepts.
+        let acceptedKinds = FileFormat.allCases.map(\.utType)
+        return DropZone(kinds: acceptedKinds) { urls in
             sources = urls
             // Reset to a viable target for the new source type.
             if let src = sourceFormat, !src.supportedTargets().contains(target) {
@@ -83,9 +86,10 @@ struct ConvertView: View {
                         .font(Tokens.Font.caption)
                         .foregroundStyle(Tokens.Color.warn)
                 } else {
-                    Text("PDF · Markdown · HTML · DOCX · PNG · JPEG")
+                    Text("PDF · Markdown · HTML · DOCX · RTF · ODT · EPUB · TXT · LaTeX  ·  PNG · JPEG · WebP · HEIC · TIFF · GIF · BMP")
                         .font(Tokens.Font.caption)
                         .foregroundStyle(Tokens.Color.textDim)
+                        .multilineTextAlignment(.center)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 140)
@@ -173,8 +177,10 @@ struct ConvertView: View {
         sources.removeAll()
         isRunning = true
 
+        // Capture engine on the main actor so Task.detached doesn't have
+        // to re-enter it to look at `tools` (which is main-actor isolated).
+        let engineCopy = engine
         Task.detached(priority: .userInitiated) {
-            let engineCopy = engine
             for job in newJobs {
                 await MainActor.run { setStatus(job.id, .running) }
                 do {

@@ -1,6 +1,11 @@
 # FormatC
 
-A tiny macOS utility for **converting between PDF, Markdown, HTML, Word (.docx), and images**, and **merging PDFs**. Drag files in, pick a target, hit Convert.
+A tiny macOS utility for document + image work. Drag files in, hit a button.
+
+- **Convert** between PDF, Markdown, HTML, DOCX, RTF, ODT, EPUB, TXT, LaTeX, PNG, JPEG, WebP, HEIC, TIFF, GIF, BMP.
+- **Merge** PDFs.
+- **Split** PDFs — one file per page, or extract a range.
+- **Remove background** from images with Apple's on-device subject-isolation model (macOS 14+).
 
 Native SwiftUI, no analytics, no accounts, no cloud round-trip. Everything runs locally.
 
@@ -42,17 +47,17 @@ After installing, click **Refresh** in the status bar at the bottom of the Forma
 
 ## What FormatC can do
 
-| From \ To | PDF | Markdown | HTML | DOCX | PNG |
-|---|---|---|---|---|---|
-| **PDF**      | —           | pymupdf4llm | pandoc      | pandoc     | native |
-| **Markdown** | pandoc+TeX  | —           | pandoc      | pandoc     | —      |
-| **HTML**     | pandoc+TeX  | pandoc      | —           | pandoc     | —      |
-| **DOCX**     | pandoc      | pandoc      | pandoc      | —          | —      |
-| **PNG/JPG**  | native      | —           | —           | —          | —      |
+Text formats (PDF, Markdown, HTML, DOCX, RTF, ODT, EPUB, TXT, LaTeX) convert any-to-any via pandoc, plus PDF → Markdown via [pdf2md.py](pdf2md.py) (better tables than pandoc's PDF reader). Anything → PDF that isn't already goes through `xelatex`.
 
-Plus **PDF merge** — drop N PDFs into the Merge tab, drag to reorder, hit Save.
+Image formats (PNG, JPEG, WebP, HEIC, TIFF, GIF, BMP) convert any-to-any natively via Core Graphics / ImageIO — zero installs.
 
-"Native" cells work with zero installs; the others need the tool named.
+Cross-category:
+
+- Any image → PDF (bundles into a single-page or multi-page PDF)
+- PDF → PNG (rasterizes each page at 200 DPI)
+- Any image → transparent PNG with background removed (Vision framework)
+
+Plus **PDF merge** (drop-and-reorder), **PDF split** (per-page or range), and **background removal**.
 
 ---
 

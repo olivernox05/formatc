@@ -20,31 +20,55 @@ enum PandocEngineError: LocalizedError {
 struct PandocEngine {
     let executablePath: String
 
-    /// pandoc format tokens for its `-f` / `-t` flags.
-    static func pandocFormat(_ format: FileFormat) -> String? {
+    /// pandoc's reader (-f) token. Asymmetric with the writer because
+    /// pandoc has no "plain text" reader — plain-text files are just
+    /// read as markdown, which is a safe superset.
+    static func pandocReader(_ format: FileFormat) -> String? {
+        switch format {
+        case .markdown, .txt: return "markdown"
+        case .html:  return "html"
+        case .docx:  return "docx"
+        case .rtf:   return "rtf"
+        case .odt:   return "odt"
+        case .epub:  return "epub"
+        case .tex:   return "latex"
+        default:     return nil       // PDF and images have no pandoc reader
+        }
+    }
+
+    /// pandoc's writer (-t) token. "plain" writes flat text with markdown
+    /// stripped, which is what a TXT target should produce.
+    static func pandocWriter(_ format: FileFormat) -> String? {
         switch format {
         case .markdown: return "markdown"
-        case .html: return "html"
-        case .docx: return "docx"
-        case .pdf: return "pdf"       // only valid as output target
-        case .png, .jpeg: return nil  // not text; pandoc doesn't handle these
+        case .txt:      return "plain"
+        case .html:     return "html"
+        case .docx:     return "docx"
+        case .rtf:      return "rtf"
+        case .odt:      return "odt"
+        case .epub:     return "epub"
+        case .tex:      return "latex"
+        case .pdf:      return "pdf"
+        default:        return nil     // images can't be a pandoc target
         }
     }
 
     static func canConvert(from: FileFormat, to: FileFormat) -> Bool {
-        // PDF is output-only for pandoc; images are not text.
+        // Route PDF→text through pdf2md, not pandoc — pandoc's PDF reader
+        // loses tables and mangles code blocks. Keep only PDF→DOCX here for
+        // the rare DOCX-only need.
         if from == .pdf && to != .docx { return false }
-        // pandoc technically reads PDF via a wrapper, but the round-trip
-        // quality is bad. Route PDF→text conversions through pdf2md
-        // instead. Keep just PDF→DOCX here for the rare DOCX-only need.
-        if from == .png || from == .jpeg { return false }
-        if to == .png || to == .jpeg { return false }
+        if !from.isText && from != .pdf { return false }
+        if !to.isText && to != .pdf { return false }
+        // TXT is output-only in this wrapper (pandoc reads txt as-is but
+        // it's usually more useful to route txt→pdf via a real doc format).
+        // Actually — pandoc handles txt fine. Allow.
         return true
     }
 
     func convert(from src: URL, to dst: URL, srcFormat: FileFormat, dstFormat: FileFormat) throws {
-        guard let inFmt = Self.pandocFormat(srcFormat),
-              let outFmt = Self.pandocFormat(dstFormat) else {
+        guard let inFmt = Self.pandocReader(srcFormat),
+              let outFmt = Self.pandocWriter(dstFormat) else {
             throw PandocEngineError.failed(status: -1, stderr: "unsupported format pair")
         }
         try FileManager.default.createDirectory(
