@@ -83,6 +83,8 @@ xcodebuild -project app/FormatC.xcodeproj \
   -destination 'platform=macOS' build
 ```
 
+To produce a **notarized** zip that macOS accepts without the right-click → Open dance, do the one-time setup in [docs/notarize.md](docs/notarize.md) and run `./scripts/release.sh`. Without the setup, the script still builds a working local .app — just falls back to ad-hoc signing.
+
 ---
 
 ## Under the hood
