@@ -56,8 +56,10 @@ final class ToolCheck {
         }
         // Ask the script's helper via a one-liner. It's cheaper than the
         // full script and avoids the "no PDF given" exit branch.
+        // importlib.util is not a lazy submodule import on Python 3.9
+        // (Apple's system python3) — it has to be imported explicitly.
         let code = """
-        import importlib
+        import importlib.util
         for name in ("pymupdf4llm", "pdfplumber"):
             if importlib.util.find_spec(name):
                 print("pymupdf4llm" if name == "pymupdf4llm" else "plumber"); break
