@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    enum Tab: Hashable { case convert, merge, split, editPDF, backgroundRemove }
+    enum Tab: Hashable { case convert, merge, split, editPDF, interactive, backgroundRemove }
     @State private var tab: Tab = .convert
     @Environment(ToolCheck.self) private var tools
 
@@ -16,6 +16,7 @@ struct ContentView: View {
                 case .merge:            MergeView()
                 case .split:            SplitView()
                 case .editPDF:          EditPDFView()
+                case .interactive:      InteractiveEditorView()
                 case .backgroundRemove: BackgroundRemoveView()
                 }
             }
@@ -39,11 +40,12 @@ struct ContentView: View {
                 Text("Convert").tag(Tab.convert)
                 Text("Merge").tag(Tab.merge)
                 Text("Split").tag(Tab.split)
-                Text("Edit PDF").tag(Tab.editPDF)
+                Text("PDF Tools").tag(Tab.editPDF)
+                Text("Editor").tag(Tab.interactive)
                 Text("Remove BG").tag(Tab.backgroundRemove)
             }
             .pickerStyle(.segmented)
-            .frame(width: 480)
+            .frame(width: 560)
         }
         .padding(.horizontal, Tokens.Space.lg)
         .padding(.vertical, Tokens.Space.md)

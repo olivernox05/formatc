@@ -22,6 +22,32 @@ enum PDFOverlayError: LocalizedError {
     }
 }
 
+/// One thing the user wants to lay down on a PDF page: an image
+/// (signature), some new text, or a "cover the original text with white
+/// and re-type in Helvetica" edit. All in page coordinates (points,
+/// origin bottom-left).
+enum PDFPlacement: Identifiable {
+    case signature(id: UUID, pageIndex: Int, bounds: CGRect, imageURL: URL)
+    case text(id: UUID, pageIndex: Int, anchor: CGPoint, text: String, fontSize: CGFloat, whiteCover: Bool, coverRect: CGRect?)
+    case editedText(id: UUID, pageIndex: Int, originalBounds: CGRect, newText: String, fontSize: CGFloat)
+
+    var id: UUID {
+        switch self {
+        case .signature(let id, _, _, _): return id
+        case .text(let id, _, _, _, _, _, _): return id
+        case .editedText(let id, _, _, _, _): return id
+        }
+    }
+
+    var pageIndex: Int {
+        switch self {
+        case .signature(_, let p, _, _): return p
+        case .text(_, let p, _, _, _, _, _): return p
+        case .editedText(_, let p, _, _, _): return p
+        }
+    }
+}
+
 enum PDFAnchor: String, CaseIterable, Identifiable {
     case topLeft, topCenter, topRight, bottomLeft, bottomCenter, bottomRight
     var id: String { rawValue }
@@ -70,6 +96,84 @@ enum PDFOverlay {
         }
     }
 
+    /// Apply an arbitrary list of placements in one pass — each page of
+    /// the source is redrawn once, and every placement that targets that
+    /// page gets drawn on top in the order it was added. This is the
+    /// entry point the interactive editor uses.
+    static func apply(
+        placements: [PDFPlacement],
+        input: URL, output: URL
+    ) throws {
+        guard let source = CGPDFDocument(input as CFURL), source.numberOfPages > 0 else {
+            throw PDFOverlayError.cannotOpen(input)
+        }
+        try FileManager.default.createDirectory(
+            at: output.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        var firstBox = source.page(at: 1)!.getBoxRect(.mediaBox)
+        guard let consumer = CGDataConsumer(url: output as CFURL),
+              let ctx = CGContext(consumer: consumer, mediaBox: &firstBox, nil) else {
+            throw PDFOverlayError.cannotCreateContext
+        }
+
+        // Prefetch signature images once, so a single sig placed on 20 pages
+        // doesn't decode the PNG 20 times.
+        var sigCache: [URL: CGImage] = [:]
+        for placement in placements {
+            if case .signature(_, _, _, let url) = placement, sigCache[url] == nil {
+                if let img = NSImage(contentsOf: url) {
+                    var rect = NSRect.zero
+                    if let cg = img.cgImage(forProposedRect: &rect, context: nil, hints: nil) {
+                        sigCache[url] = cg
+                    }
+                }
+            }
+        }
+
+        for pageNumber in 1...source.numberOfPages {
+            guard let page = source.page(at: pageNumber) else { continue }
+            let mediaBox = page.getBoxRect(.mediaBox)
+            ctx.beginPDFPage([
+                kCGPDFContextMediaBox: NSValue(rect: NSRectFromCGRect(mediaBox))
+            ] as CFDictionary)
+            ctx.drawPDFPage(page)
+
+            let pageIdx = pageNumber - 1
+            for placement in placements where placement.pageIndex == pageIdx {
+                switch placement {
+                case .signature(_, _, let bounds, let url):
+                    guard let cg = sigCache[url] else { continue }
+                    ctx.draw(cg, in: bounds)
+
+                case .text(_, _, let anchor, let text, let fontSize, let cover, let coverRect):
+                    if cover, let coverRect = coverRect {
+                        ctx.setFillColor(gray: 1, alpha: 1)
+                        ctx.fill(coverRect)
+                    }
+                    drawText(text, at: anchor, fontSize: fontSize, in: ctx)
+
+                case .editedText(_, _, let originalBounds, let newText, let fontSize):
+                    // Cover the original run with white, then draw the
+                    // replacement text at the same baseline. Font
+                    // substitution is unavoidable — we don't know what
+                    // the original was — so it lands in Helvetica.
+                    let pad: CGFloat = 1
+                    let cover = originalBounds.insetBy(dx: -pad, dy: -pad)
+                    ctx.setFillColor(gray: 1, alpha: 1)
+                    ctx.fill(cover)
+                    drawText(newText,
+                             at: CGPoint(x: originalBounds.minX,
+                                         y: originalBounds.minY),
+                             fontSize: fontSize, in: ctx)
+                }
+            }
+
+            ctx.endPDFPage()
+        }
+        ctx.closePDF()
+    }
+
     /// Add plain text at a fixed anchor. If `whiteCover` is true, a white
     /// rectangle 8 points larger than the text bounds is drawn under it —
     /// the "erase" step of the erase-then-retype workflow.
@@ -107,6 +211,23 @@ enum PDFOverlay {
             ctx.textPosition = CGPoint(x: rect.minX, y: rect.minY)
             CTLineDraw(line, ctx)
         }
+    }
+
+    /// Draw a single line of Helvetica text at `anchor` (its baseline
+    /// bottom-left corner). Shared by `apply(placements:)` and the older
+    /// anchored-text path.
+    private static func drawText(
+        _ text: String, at anchor: CGPoint, fontSize: CGFloat, in ctx: CGContext
+    ) {
+        let font = CTFontCreateWithName("Helvetica" as CFString, fontSize, nil)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.black.cgColor
+        ]
+        let attr = NSAttributedString(string: text, attributes: attrs)
+        let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
+        ctx.textPosition = anchor
+        CTLineDraw(line, ctx)
     }
 
     // MARK: - Shared plumbing
