@@ -47,13 +47,15 @@ struct InteractiveEditorView: View {
     var body: some View {
         HStack(spacing: 0) {
             leftPane
-                .frame(width: 340)
+                .frame(width: 340, alignment: .top)
+                .frame(maxHeight: .infinity, alignment: .top)
                 .padding(Tokens.Space.lg)
                 .background(Tokens.Color.surface)
             Divider().overlay(Tokens.Color.border)
             rightPane
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $showingSignatureCapture) {
             SignatureCaptureView(onSaved: { hasSignature = true })
         }

@@ -42,16 +42,22 @@ struct EditPDFView: View {
         VStack(spacing: 0) {
             modePicker
             Divider().overlay(Tokens.Color.border)
+            // maxHeight: .infinity here is what stops the mode picker
+            // from shifting when controls below grow or shrink — without
+            // it, the HStack collapses to intrinsic height and the whole
+            // VStack repacks each time.
             HStack(alignment: .top, spacing: 0) {
                 leftPane
-                    .frame(width: 340)
+                    .frame(width: 340, alignment: .top)
+                    .frame(maxHeight: .infinity, alignment: .top)
                     .padding(Tokens.Space.lg)
                     .background(Tokens.Color.surface)
                 Divider().overlay(Tokens.Color.border)
                 rightPane
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .padding(Tokens.Space.lg)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 

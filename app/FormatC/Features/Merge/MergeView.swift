@@ -11,14 +11,16 @@ struct MergeView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             leftPane
-                .frame(width: 320)
+                .frame(width: 320, alignment: .top)
+                .frame(maxHeight: .infinity, alignment: .top)
                 .padding(Tokens.Space.lg)
                 .background(Tokens.Color.surface)
             Divider().overlay(Tokens.Color.border)
             rightPane
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(Tokens.Space.lg)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var leftPane: some View {
