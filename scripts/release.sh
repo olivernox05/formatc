@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build FormatC as a universal Release binary, sign it with your Developer ID
+# Build Format as a universal Release binary, sign it with your Developer ID
 # certificate, submit it to Apple's notary service, staple the ticket, and
 # package the notarized bundle as a .zip ready to attach to a GitHub Release.
 #
@@ -13,7 +13,7 @@
 #   NOTARY_PROFILE     keychain profile name (default: formatc-notary)
 #   SKIP_NOTARIZE      set to 1 to build + sign but not submit to Apple
 #   BUILD              build derived-data path (default: /tmp/…)
-#   OUT                output zip path (default: dist/FormatC.zip)
+#   OUT                output zip path (default: dist/Format.zip)
 
 set -euo pipefail
 
