@@ -1,4 +1,4 @@
-# FormatC
+# Format
 
 A tiny macOS utility for document + image work. Drag files in, hit a button.
 
@@ -17,19 +17,19 @@ Native SwiftUI, no analytics, no accounts, no cloud round-trip. Everything runs 
 
 **Download the app**
 
-Grab the latest `FormatC.zip` from [Releases](https://github.com/olivernox05/formatc/releases/latest), unzip, and move `FormatC.app` to your Applications folder.
+Grab the latest `Format.zip` from [Releases](https://github.com/olivernox05/formatc/releases/latest), unzip, and move `Format.app` to your Applications folder.
 
 **First launch (Gatekeeper)**
 
 Because the app isn't signed with a paid Apple Developer certificate, macOS will refuse the very first launch with something like *"cannot be opened because the developer cannot be verified."* Fix once:
 
-- **Right-click** (or Control-click) `FormatC.app` → **Open** → **Open** again on the confirmation dialog.
+- **Right-click** (or Control-click) `Format.app` → **Open** → **Open** again on the confirmation dialog.
 
 That whitelist entry sticks — from then on, double-click launches normally.
 
 **Optional tools**
 
-FormatC does the geometry-only work (PDF merge, PDF → PNG, images → PDF) on its own. The **text** conversions shell out to open-source CLIs. Install them once:
+Format does the geometry-only work (PDF merge, PDF → PNG, images → PDF) on its own. The **text** conversions shell out to open-source CLIs. Install them once:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/olivernox05/formatc/main/setup.sh | bash
@@ -43,11 +43,11 @@ brew install --cask basictex                       # MD/HTML → PDF (needs sudo
 python3 -m pip install --user pymupdf4llm          # PDF → Markdown
 ```
 
-After installing, click **Refresh** in the status bar at the bottom of the FormatC window. Each tool's chip turns green as the app detects it.
+After installing, click **Refresh** in the status bar at the bottom of the Format window. Each tool's chip turns green as the app detects it.
 
 ---
 
-## What FormatC can do
+## What Format can do
 
 Text formats (PDF, Markdown, HTML, DOCX, RTF, ODT, EPUB, TXT, LaTeX) convert any-to-any via pandoc, plus PDF → Markdown via [pdf2md.py](pdf2md.py) (better tables than pandoc's PDF reader). Anything → PDF that isn't already goes through `xelatex`.
 

@@ -23,7 +23,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 # moment it's written, and codesign rejects the bundle ("resource fork, Finder
 # information, or similar detritus not allowed"). Building in /tmp sidesteps it.
 BUILD=${BUILD:-"/tmp/formatc-release-build"}
-OUT=${OUT:-"$ROOT/dist/FormatC.zip"}
+OUT=${OUT:-"$ROOT/dist/Format.zip"}
 NOTARY_PROFILE=${NOTARY_PROFILE:-formatc-notary}
 SKIP_NOTARIZE=${SKIP_NOTARIZE:-0}
 
@@ -74,10 +74,11 @@ fi
 
 xcodebuild "${XCODEBUILD_ARGS[@]}" build
 
-APP="$BUILD/Build/Products/Release/FormatC.app"
+# PRODUCT_NAME is "Format" (the target/scheme stay FormatC internally).
+APP="$BUILD/Build/Products/Release/Format.app"
 echo
 echo "Built:"
-lipo -info "$APP/Contents/MacOS/FormatC"
+lipo -info "$APP/Contents/MacOS/Format"
 
 # ── Verify signature ────────────────────────────────────────────────────
 echo

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# FormatC — install every optional tool the app can shell out to.
+# Format — install every optional tool the app can shell out to.
 # Everything native (PDF merge, images↔PDF, PDF→PNG) already works with zero
 # installs; this script only unlocks the *text* conversions.
 #
@@ -7,7 +7,7 @@
 
 set -e
 
-echo "== FormatC setup =="
+echo "== Format setup =="
 
 if ! command -v brew >/dev/null 2>&1; then
     cat >&2 <<'MSG'
@@ -41,4 +41,4 @@ echo "-- pymupdf4llm (PDF → Markdown) --"
 python3 -m pip install --user --quiet pymupdf4llm && echo "  ok"
 
 echo
-echo "All set. Open FormatC and click Refresh in the status bar."
+echo "All set. Open Format and click Refresh in the status bar."

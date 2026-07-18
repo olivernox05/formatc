@@ -23,9 +23,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.toolsai.formatc
+        # Product renamed to "Format" (2026-07); bundle id deliberately
+        # stays app.toolsai.formatc so Gatekeeper approvals and the
+        # signature store (keyed on bundle id) survive the rename.
+        PRODUCT_NAME: Format
         ARCHS: "arm64 x86_64"
         VALID_ARCHS: "arm64 x86_64"
-        INFOPLIST_KEY_CFBundleDisplayName: FormatC
+        INFOPLIST_KEY_CFBundleDisplayName: Format
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_NSHumanReadableCopyright: "© ToolsAI"
         INFOPLIST_KEY_CFBundleIconName: AppIcon
